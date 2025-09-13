@@ -11,3 +11,16 @@ This repo demonstrates the same Functional Programming paradigms in C++.
 It is (or was, depending on when you read this) streamed on Twitch:
 
 - [Twitch @chshersh](https://www.twitch.tv/chshersh)
+
+## For Devs
+
+```shell
+# Configure into ./build
+$ cmake --preset=default
+
+# Build everything
+$ cmake --build --preset=default -- -s
+
+# Build just Homework2
+$ cmake --build --preset=default --target Homework2 -- -s
+```
