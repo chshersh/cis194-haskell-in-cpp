@@ -45,6 +45,10 @@ struct Unknown {
 
 using LogMessage = std::variant<Message, Unknown>;
 
+LogMessage make_message(MessageType type, Timestamp timestamp, std::string msg) {
+    return Message{ type, timestamp, std::move(msg) };
+}
+
 std::optional<int> to_int(std::string_view sv)
 {
     int r;
@@ -85,36 +89,36 @@ LogMessage parseMessage(std::string str) {
         }
     };
 
+    auto get_int = [&get](size_t i) -> std::optional<int> {
+        return get(i).and_then(to_int);
+    };
+
     return
         get(0)
-        .and_then([&get, &words](const std::string& msgTypeStr) {
+        .and_then([&get_int, &words](const std::string& msgTypeStr) {
             std::optional<LogMessage> result;
 
             if (msgTypeStr == "I") {
                 result =
-                    get(1)
-                    .and_then(to_int)
+                    get_int(1)
                     .transform([&words](int timestamp) {
-                        return LogMessage{ Message{ Info{}, timestamp, unwords(words, 2) } };
+                        return make_message(Info{}, timestamp, unwords(words, 2));
                     });
             } else if (msgTypeStr == "W") {
                 result =
-                    get(1)
-                    .and_then(to_int)
+                    get_int(1)
                     .transform([&words](int timestamp) {
-                        return LogMessage{ Message{ Warning{}, timestamp, unwords(words, 2) } };
+                        return make_message(Warning{}, timestamp, unwords(words, 2));
                     });
             } else if (msgTypeStr == "E") {
                 result =
-                    get(1)
-                    .and_then([&words, &get](const std::string& codeStr) {
-                        return to_int(codeStr).and_then([&words, &get](int code) {
-                            return get(2)
-                                .and_then(to_int)
-                                .transform([&words, code](int timestamp) {
-                                     return LogMessage{ Message{ Error{ code }, timestamp, unwords(words, 3) } };
-                                });
-                        });
+                    get_int(1)
+                    .and_then([&words, &get_int](int code) {
+                        return
+                            get_int(2)
+                            .transform([&words, code](int timestamp) {
+                                return make_message(Error{ code }, timestamp, unwords(words, 3));
+                            });
                     });
             } else {
                 result = std::nullopt;
