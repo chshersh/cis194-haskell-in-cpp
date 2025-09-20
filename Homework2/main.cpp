@@ -1,19 +1,16 @@
 #include <cassert>
 #include <charconv>
 #include <iostream>
-#include <variant>
-#include <string>
-#include <ranges>
-#include <vector>
 #include <optional>
+#include <print>
+#include <ranges>
+#include <string>
+#include <variant>
+#include <vector>
 
-/*
-data MessageType = Info | Warning | Error Int
-*/
 struct Info {
     auto operator<=>(const Info&) const = default;
 };
-
 struct Warning {
     auto operator<=>(const Warning&) const = default;
 };
@@ -25,8 +22,6 @@ struct Error {
 
 using MessageType = std::variant<Info, Warning, Error>;
 
-// type TimeStamp = Int  // Datetime
-// data LogMessage = Message MessageType TimeStamp String | Unknown String
 using Timestamp = int;
 
 struct Message {
@@ -130,12 +125,14 @@ LogMessage parseMessage(std::string str) {
 }
 
 int main() {
-    std::cout << "========= Start Here =========\n";
+    std::println("========= Start Here =========");
+
     assert((parseMessage("I 29 la la la") ==
       LogMessage{ Message{ Info{}, 29, "la la la" } }));
     assert((parseMessage("E 2 562 help help") ==
       LogMessage{ Message{ Error{2}, 562, "help help" } }));
     assert((parseMessage("This is not in the right format") ==
       LogMessage{ Unknown{ "This is not in the right format" } }));
+    std::println("========= PASS: 'parseMessage' tests =========");
 
 }
