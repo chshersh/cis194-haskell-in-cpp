@@ -1,8 +1,81 @@
 #include <print>
 #include <vector>
+#include <ranges>
+#include <memory>
+#include <span>
+#include <algorithm>
+#include <functional>
+#include <array>
+#include <unordered_set>
+
+template <typename T, typename F>
+auto iterate(T x, F&& f) {
+    return std::views::iota(0)
+        | std::views::transform([state = std::move(x), step = std::forward<F>(f)](int) mutable {
+            auto result = state;
+            state = step(state);
+            return result;
+        });
+}
+
+template <typename T>
+struct Tree {
+    int height;
+    T val;
+    std::unique_ptr<Tree<T>> left;
+    std::unique_ptr<Tree<T>> right;
+};
+
+template <typename T>
+std::unique_ptr<Tree<T>> fold_tree(const std::vector<T>& vec) {
+    return nullptr;
+}
+
+int func1(std::span<int> xs) {
+    auto pipe = xs
+        | std::views::filter([](int x) { return x % 2 == 0; })
+        | std::views::transform([](int x) { return x - 2; });
+
+    return std::ranges::fold_left(pipe, 1, std::multiplies<>{});
+}
+
+// Returns primes in range: 3...2 * n + 2
+std::vector<int> sieve_sundaram(int n) {
+    auto sieve =
+          std::views::iota(1, n + 1)
+        | std::ranges::to<std::unordered_set>();
+
+    auto sieved_out =
+          std::views::iota(1, n + 1)
+        | std::views::transform([n](int j) {
+            return
+                  std::views::iota(j, n + 1)
+                | std::views::transform([j](int i) { return i + j + 2 * i * j; })
+                | std::views::take_while([n](int x) { return x <= n; });
+        })
+        | std::views::join;
+
+    for (int out : sieved_out)
+        sieve.erase(out);
+
+    auto primes = sieve
+        | std::views::transform([](int x) { return x * 2 + 1; })
+        | std::ranges::to<std::vector>();
+
+    std::ranges::sort(primes);
+
+    return primes;
+}
 
 int main() {
-    std::println("Hello, FP!");
-    std::vector v{1, 5, 2};
-    std::println("{}", v);
+    auto incs = iterate(1, [](int x) { return x * 2; }) | std::views::take(10);
+
+    for (auto x : incs) {
+        std::print("{} ", x);
+    }
+    std::println();
+
+    std::array arr = {1, 8, 3, 4, 5};
+    std::println("Func1: {}", func1(arr));
+    std::println("Primes: {}", sieve_sundaram(16));
 }
